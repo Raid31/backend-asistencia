@@ -36,7 +36,7 @@ db.connect((err) => {
 // Función global para registrar acciones en la auditoría
 function registrarAuditoria(idUsuarioActor, tablaAfectada, idAfectado, accion, descripcion) {
     const query = `
-        INSERT INTO HistorialAuditoria 
+        INSERT INTO historialAuditoria 
         (idUsuarioActor, tablaAfectada, idAfectado, accion, descripcion) 
         VALUES (?, ?, ?, ?, ?)
     `;
@@ -55,7 +55,7 @@ app.get('/api/estado', (req, res) => {
 // ==========================================
 app.post('/api/login', (req, res) => {
     const { correo, contrasena } = req.body;
-    const query = 'SELECT * FROM Usuario WHERE correo = ? AND contrasena = ?';
+    const query = 'SELECT * FROM usuario WHERE correo = ? AND contrasena = ?';
 
     db.query(query, [correo, contrasena], (err, results) => {
         // 🔥 Aquí agregamos el console.error para descubrir qué le molesta a Aiven
@@ -86,7 +86,7 @@ app.post('/api/login', (req, res) => {
 // ==========================================
 app.post('/api/marcar-asistencia', (req, res) => {
     const { codigoQR } = req.body;
-    const queryBuscar = 'SELECT idUsuario, nombre FROM Usuario WHERE codigoQR = ?';
+    const queryBuscar = 'SELECT idUsuario, nombre FROM usuario WHERE codigoQR = ?';
     
     db.query(queryBuscar, [codigoQR], (err, usuarios) => {
         if (err) return res.status(500).json({ error: 'Error en la base de datos' });
@@ -95,7 +95,7 @@ app.post('/api/marcar-asistencia', (req, res) => {
         const usuario = usuarios[0];
         const fechaActual = new Date().toISOString().split('T')[0];
         const horaActual = new Date().toTimeString().split(' ')[0];
-        const queryComprobar = 'SELECT idRegistro, horaEntrada, horaSalida, estadoAsistencia FROM RegistroAsistencia WHERE idUsuario = ? AND fecha = ?';
+        const queryComprobar = 'SELECT idRegistro, horaEntrada, horaSalida, estadoAsistencia FROM registroAsistencia WHERE idUsuario = ? AND fecha = ?';
         
         db.query(queryComprobar, [usuario.idUsuario, fechaActual], (err, registros) => {
             if (err) return res.status(500).json({ error: 'Error al comprobar registro' });
@@ -103,7 +103,7 @@ app.post('/api/marcar-asistencia', (req, res) => {
             if (registros.length === 0) {
                 // ESCENARIO A: ENTRADA
                 let estadoEntrada = horaActual > '09:30:00' ? 'ATRASADO' : 'ASISTENCIA COMPLETA';
-                const queryEntrada = 'INSERT INTO RegistroAsistencia (idUsuario, fecha, horaEntrada, estadoAsistencia) VALUES (?, ?, ?, ?)';
+                const queryEntrada = 'INSERT INTO registroAsistencia (idUsuario, fecha, horaEntrada, estadoAsistencia) VALUES (?, ?, ?, ?)';
                 
                 // NOTA: Agregamos "result" para obtener el ID de la nueva fila
                 db.query(queryEntrada, [usuario.idUsuario, fechaActual, horaActual, estadoEntrada], (err, result) => {
@@ -123,7 +123,7 @@ app.post('/api/marcar-asistencia', (req, res) => {
                     if (horaActual < '17:30:00') estadoSalida = 'SALIDA ANTICIPADA';
                     
                     const querySalida = `
-                        UPDATE RegistroAsistencia 
+                        UPDATE registroAsistencia 
                         SET horaSalida = ?, horasTrabajadas = ROUND(TIME_TO_SEC(TIMEDIFF(?, horaEntrada))/3600, 2), estadoAsistencia = ?
                         WHERE idRegistro = ?
                     `;
@@ -148,7 +148,7 @@ app.post('/api/marcar-asistencia', (req, res) => {
 // MÓDULO CRUD DE USUARIOS
 // ==========================================
 app.get('/api/usuarios', (req, res) => {
-    const queryListar = 'SELECT u.idUsuario, u.rut, u.nombre, u.correo, r.nombreRol FROM Usuario u INNER JOIN Rol r ON u.idRol = r.idRol';
+    const queryListar = 'SELECT u.idUsuario, u.rut, u.nombre, u.correo, r.nombreRol FROM usuario u INNER JOIN rol r ON u.idRol = r.idRol';
     db.query(queryListar, (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error en la base de datos' });
         res.json({ success: true, usuarios: resultados });
@@ -160,7 +160,7 @@ app.post('/api/usuarios', (req, res) => {
     const idRol = 2; 
     const datosEmpleador = 'Empresa de Prueba SpA';
     const codigoGenerado = 'EMP-' + rut.split('-')[0];
-    const queryInsertar = 'INSERT INTO Usuario (idRol, rut, nombre, correo, contrasena, datosEmpleador, codigoQR) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const queryInsertar = 'INSERT INTO usuario (idRol, rut, nombre, correo, contrasena, datosEmpleador, codigoQR) VALUES (?, ?, ?, ?, ?, ?, ?)';
     
     db.query(queryInsertar, [idRol, rut, nombre, correo, contrasena, datosEmpleador, codigoGenerado], (err, result) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al guardar en la base de datos' });
@@ -175,7 +175,7 @@ app.post('/api/usuarios', (req, res) => {
 app.put('/api/usuarios/:id', (req, res) => {
     const idUsuario = req.params.id;
     const { rut, nombre, correo } = req.body;
-    const queryEditar = 'UPDATE Usuario SET rut = ?, nombre = ?, correo = ? WHERE idUsuario = ?';
+    const queryEditar = 'UPDATE usuario SET rut = ?, nombre = ?, correo = ? WHERE idUsuario = ?';
     
     db.query(queryEditar, [rut, nombre, correo, idUsuario], (err, result) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al actualizar en la base de datos' });
@@ -189,7 +189,7 @@ app.put('/api/usuarios/:id', (req, res) => {
 
 app.delete('/api/usuarios/:id', (req, res) => {
     const idUsuario = req.params.id;
-    const queryEliminar = 'DELETE FROM Usuario WHERE idUsuario = ?';
+    const queryEliminar = 'DELETE FROM usuario WHERE idUsuario = ?';
     
     db.query(queryEliminar, [idUsuario], (err, result) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al eliminar en la base de datos' });
@@ -205,7 +205,7 @@ app.delete('/api/usuarios/:id', (req, res) => {
 // MÓDULO DE REPORTES (RE-01, RE-02, RE-03)
 // ==========================================
 app.get('/api/reportes/atrasos', (req, res) => {
-    const query = "SELECT u.rut, u.nombre, r.fecha, r.horaEntrada FROM RegistroAsistencia r INNER JOIN Usuario u ON r.idUsuario = u.idUsuario WHERE r.estadoAsistencia = 'ATRASADO' ORDER BY r.fecha DESC, r.horaEntrada DESC";
+    const query = "SELECT u.rut, u.nombre, r.fecha, r.horaEntrada FROM registroAsistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE r.estadoAsistencia = 'ATRASADO' ORDER BY r.fecha DESC, r.horaEntrada DESC";
     db.query(query, (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al obtener atrasos' });
         res.json({ success: true, datos: resultados });
@@ -213,7 +213,7 @@ app.get('/api/reportes/atrasos', (req, res) => {
 });
 
 app.get('/api/reportes/salidas-anticipadas', (req, res) => {
-    const query = "SELECT u.rut, u.nombre, r.fecha, r.horaSalida FROM RegistroAsistencia r INNER JOIN Usuario u ON r.idUsuario = u.idUsuario WHERE r.estadoAsistencia = 'SALIDA ANTICIPADA' ORDER BY r.fecha DESC, r.horaSalida DESC";
+    const query = "SELECT u.rut, u.nombre, r.fecha, r.horaSalida FROM registroAsistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE r.estadoAsistencia = 'SALIDA ANTICIPADA' ORDER BY r.fecha DESC, r.horaSalida DESC";
     db.query(query, (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al obtener salidas anticipadas' });
         res.json({ success: true, datos: resultados });
@@ -222,7 +222,7 @@ app.get('/api/reportes/salidas-anticipadas', (req, res) => {
 
 app.get('/api/reportes/inasistencias/:fecha', (req, res) => {
     const fechaConsulta = req.params.fecha;
-    const query = "SELECT rut, nombre FROM Usuario WHERE idRol = 2 AND idUsuario NOT IN (SELECT idUsuario FROM RegistroAsistencia WHERE fecha = ?)";
+    const query = "SELECT rut, nombre FROM usuario WHERE idRol = 2 AND idUsuario NOT IN (SELECT idUsuario FROM registroAsistencia WHERE fecha = ?)";
     db.query(query, [fechaConsulta], (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al obtener inasistencias' });
         res.json({ success: true, datos: resultados });
@@ -231,7 +231,7 @@ app.get('/api/reportes/inasistencias/:fecha', (req, res) => {
 
 app.get('/api/mi-historial/:qr', (req, res) => {
     const qrWorker = req.params.qr;
-    const query = "SELECT r.fecha, r.horaEntrada, r.horaSalida, r.estadoAsistencia FROM RegistroAsistencia r INNER JOIN Usuario u ON r.idUsuario = u.idUsuario WHERE u.codigoQR = ? ORDER BY r.fecha DESC LIMIT 10";
+    const query = "SELECT r.fecha, r.horaEntrada, r.horaSalida, r.estadoAsistencia FROM registroAsistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE u.codigoQR = ? ORDER BY r.fecha DESC LIMIT 10";
     db.query(query, [qrWorker], (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error en la base de datos' });
         res.json({ success: true, historial: resultados });
@@ -275,7 +275,7 @@ app.get('/api/admin/justificaciones', (req, res) => {
     const query = `
         SELECT j.idJustificacion, j.motivo, j.profesionalEmisor, j.rutaPDF, j.estadoSolicitud, u.nombre, u.rut 
         FROM justificacion j
-        INNER JOIN Usuario u ON j.idUsuario = u.idUsuario
+        INNER JOIN usuario u ON j.idUsuario = u.idUsuario
         WHERE j.estadoSolicitud = 'PENDIENTE'
     `;
     db.query(query, (err, resultados) => {
@@ -328,8 +328,8 @@ app.put('/api/admin/justificaciones/:id', (req, res) => {
 app.get('/api/admin/auditoria', (req, res) => {
     const query = `
         SELECT h.idHistorial, h.fechaHora, h.tablaAfectada, h.accion, h.descripcion, u.nombre as actor
-        FROM HistorialAuditoria h
-        LEFT JOIN Usuario u ON h.idUsuarioActor = u.idUsuario
+        FROM historialAuditoria h
+        LEFT JOIN usuario u ON h.idUsuarioActor = u.idUsuario
         ORDER BY h.idHistorial DESC
         LIMIT 30
     `;
@@ -344,7 +344,7 @@ app.get('/api/admin/justificaciones-historial', (req, res) => {
     const query = `
         SELECT j.idJustificacion, j.motivo, j.profesionalEmisor, j.rutaPDF, j.estadoSolicitud, u.nombre, u.rut 
         FROM justificacion j
-        INNER JOIN Usuario u ON j.idUsuario = u.idUsuario
+        INNER JOIN usuario u ON j.idUsuario = u.idUsuario
         WHERE j.estadoSolicitud != 'PENDIENTE'
         ORDER BY j.idJustificacion DESC
     `;
