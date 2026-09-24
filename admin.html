@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+    /* 1. TIPOGRAFÍA Y FONDO GLOBAL */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 50%, #ede9fe 100%);
+        min-height: 100vh;
+    }
+
+    /* 2. BARRA DE NAVEGACIÓN SUPERIOR */
+    .navbar {
+        background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%) !important;
+        padding: 14px 0 !important;
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
+    }
+    .navbar .container, .navbar .container-fluid {
+        background: transparent !important;
+        box-shadow: none !important;
+        padding-top: 0 !important; padding-bottom: 0 !important;
+        margin-top: 0 !important; margin-bottom: 0 !important;
+    }
+    .navbar .navbar-brand, .navbar span { color: #ffffff !important; font-weight: 600; }
+    .navbar .btn {
+        background: rgba(255, 255, 255, 0.18) !important;
+        border: 1px solid rgba(255, 255, 255, 0.35) !important;
+        color: #ffffff !important;
+        border-radius: 10px;
+    }
+    .navbar .btn:hover { background: rgba(255, 255, 255, 0.3) !important; }
+
+    /* 3. TARJETAS FLOTANTES */
+    .card {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-radius: 24px !important;
+        border: none !important;
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.08) !important;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Contenedor principal de Admin (cuando no usa .card) */
+    body > .container:not(:has(.card)) {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 24px;
+        padding: 35px;
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.08);
+        margin-top: 40px;
+        margin-bottom: 40px;
+    }
+
+    h2, h3, h4, h5 { color: #312e81; font-weight: 700; margin-bottom: 20px; }
+
+    /* 4. FORMULARIOS Y CAJAS DE TEXTO */
+    .form-control {
+        border-radius: 12px;
+        padding: 12px 15px;
+        border: 1px solid #c7d2fe;
+        background-color: #f8fafc;
+        color: #334155;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus {
+        background-color: #ffffff;
+        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.2);
+        border-color: #818cf8;
+    }
+    .form-label { color: #4338ca; font-weight: 600; font-size: 0.95rem; }
+
+    /* 5. BOTONES PRINCIPALES */
+    .btn {
+        border-radius: 12px; font-weight: 600; padding: 10px 20px;
+        transition: all 0.3s ease; border: none !important;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25); }
+    
+    /* Botones primarios */
+    .btn-primary, .btn-success, .btn-warning[type="submit"] {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+        color: #ffffff !important;
+    }
+
+    /* 6. TABLAS */
+    .table { margin-top: 20px; }
+    .table > thead > tr > th {
+        background: #3730a3 !important; /* Índigo sólido */
+        color: #ffffff !important; border: none; padding: 16px;
+        font-weight: 500; letter-spacing: 0.5px;
+    }
+    .table > thead > tr > th:first-child { border-top-left-radius: 14px; border-bottom-left-radius: 14px; }
+    .table > thead > tr > th:last-child { border-top-right-radius: 14px; border-bottom-right-radius: 14px; }
+    .table > tbody > tr > td {
+        vertical-align: middle; padding: 16px;
+        border-bottom: 1px solid #e0e7ff; color: #334155;
+    }
+
+    /* 7. ETIQUETAS, ROLES Y ESTADOS */
+    .badge, td span[class*="bg-"] {
+        font-weight: 600 !important; padding: 6px 16px !important;
+        border-radius: 30px !important; font-size: 0.85rem !important;
+    }
+    .bg-success, .text-bg-success { background-color: #ede9fe !important; color: #6d28d9 !important; }
+    .bg-primary, .text-bg-primary { background-color: #e0e7ff !important; color: #3730a3 !important; }
+    .bg-warning, .text-bg-warning { background-color: #fef3c7 !important; color: #b45309 !important; }
+    .bg-info, .text-bg-info { background-color: #e0f2fe !important; color: #0369a1 !important; }
+    .bg-danger, .text-bg-danger { background-color: #ffe4e6 !important; color: #be123c !important; }
+
+    /* 8. BOTONES DE LA TABLA */
+    .btn-warning:not([type="submit"]) {
+        background-color: #e0e7ff !important; color: #4338ca !important; padding: 7px 16px;
+    }
+    .btn-warning:not([type="submit"]):hover { background-color: #c7d2fe !important; color: #312e81 !important; }
+    
+    .btn-danger {
+        background-color: #ffe4e6 !important; color: #be123c !important; padding: 7px 16px;
+    }
+    .btn-danger:hover { background-color: #fecdd3 !important; color: #9f1239 !important; }
+    
+    .btn-outline-primary {
+        background-color: transparent !important; color: #4f46e5 !important; 
+        border: 2px solid #4f46e5 !important; padding: 7px 16px;
+    }
+    .btn-outline-primary:hover {
+        background-color: #4f46e5 !important; color: #ffffff !important;
+    }
+
+    /* Estilo de las pestañas */
+    .nav-pills .nav-link {
+        color: #4f46e5;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+</style>
+</head>
+<body class="bg-light">
+    <!-- Barra de Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">Admin Panel - Control de Asistencia</a>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3 text-white" id="adminLogueado"></span>
+                <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <div class="container">
+        
+        <!-- Menú de Pestañas -->
+        <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold px-4" id="trabajadores-tab" data-bs-toggle="pill" data-bs-target="#trabajadores" type="button" role="tab">👥 Trabajadores</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold px-4 mx-2" id="licencias-tab" data-bs-toggle="pill" data-bs-target="#licencias" type="button" role="tab" onclick="cargarLicencias()">🏥 Licencias Pendientes</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold px-4" id="auditoria-tab" data-bs-toggle="pill" data-bs-target="#auditoria" type="button" role="tab" onclick="cargarAuditoria()">🛡️ Auditoría</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold px-4 mx-2" id="reportes-tab" data-bs-toggle="pill" data-bs-target="#reportes" type="button" role="tab">📊 Reportes</button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="adminTabsContent">
+            
+            <!-- PESTAÑA 1: Trabajadores -->
+            <div class="tab-pane fade show active" id="trabajadores" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="text-secondary">Gestión de Trabajadores</h2>
+                    <!-- Botón para cumplir el requerimiento GU-01 -->
+                    <button class="btn btn-success fw-bold" id="btnAgregarUsuario" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">
+                        + Nuevo Trabajador
+                    </button>
+                </div>
+
+                <!-- Tabla de Usuarios -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="px-3">ID</th>
+                                        <th>RUT</th>
+                                        <th>Nombre</th>
+                                        <th>Correo</th>
+                                        <th>Rol</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaUsuarios">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">Cargando usuarios desde la base de datos...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 2: Licencias -->
+            <div class="tab-pane fade" id="licencias" role="tabpanel">
+                <h3 class="mb-4">Gestión de Licencias Médicas</h3>
+                
+                <!-- Sección: Pendientes -->
+                <h5 class="text-secondary mb-3 fw-bold">⏳ Pendientes de Revisión</h5>
+                <div class="card shadow-sm border-0 mb-5">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="px-3">Trabajador</th><th>Motivo</th><th>Médico</th><th>Documento</th><th class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpoTablaLicencias">
+                                    <tr><td colspan="5" class="text-center text-muted py-4">Haz clic en la pestaña para cargar licencias...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Historial -->
+                <h5 class="text-secondary mb-3 fw-bold">📚 Historial de Resoluciones</h5>
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="px-3">Trabajador</th><th>Motivo</th><th>Documento</th><th class="text-center">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpoTablaHistorialLicencias">
+                                    <tr><td colspan="4" class="text-center text-muted py-4">Haz clic en la pestaña para cargar el historial...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: Auditoría -->
+            <div class="tab-pane fade" id="auditoria" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="m-0">Registro de Actividad (Auditoría)</h3>
+                </div>
+                
+                <!-- Filtros de Búsqueda -->
+                <div class="row mb-4">
+                    <div class="col-md-5">
+                        <input type="text" id="buscadorAuditoria" class="form-control fw-bold" placeholder="🔍 Buscar usuario, acción, detalle..." onkeyup="filtrarAuditoria()">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="date" id="fechaAuditoria" class="form-control fw-bold" onchange="filtrarAuditoria()">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-secondary w-100 fw-bold" onclick="limpiarFiltros()">❌ Limpiar Filtros</button>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="px-3">ID</th><th>Fecha y Hora</th><th>Usuario Autor</th><th>Módulo (Tabla)</th><th>Acción</th><th>Detalle</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuerpoTablaAuditoria">
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Haz clic en la pestaña para cargar auditoría...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 4: Reportes -->
+            <div class="tab-pane fade" id="reportes" role="tabpanel">
+                <h3 class="mb-4">Generación de Reportes de Asistencia</h3>
+                
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body bg-light rounded d-flex gap-3 align-items-end">
+                        <div>
+                            <button class="btn btn-warning" onclick="cargarReporte('atrasos')">Ver Atrasos</button>
+                        </div>
+                        <div>
+                            <button class="btn btn-warning" onclick="cargarReporte('salidas-anticipadas')">Ver Salidas Anticipadas</button>
+                        </div>
+                        <div class="ms-auto d-flex gap-2">
+                            <div>
+                                <label class="form-label mb-1 text-muted small">Fecha para Inasistencias</label>
+                                <input type="date" id="fechaInasistencia" class="form-control">
+                            </div>
+                            <div class="d-flex align-items-end">
+                                <button class="btn btn-danger" onclick="cargarInasistencias()">Ver Inasistencias</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark" id="cabeceraReportes">
+                                    <tr><th class="px-3">Seleccione un reporte para visualizar los datos</th></tr>
+                                </thead>
+                                <tbody id="cuerpoTablaReportes">
+                                    <tr><td class="text-center text-muted py-4">Esperando selección...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Ventana Emergente (Modal) para Crear Usuario -->
+        <div class="modal fade" id="modalNuevoUsuario" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title fw-bold">Registrar Nuevo Empleado</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formCrearUsuario">
+                            <div class="mb-3">
+                                <label class="form-label">RUT</label>
+                                <input type="text" class="form-control" id="regRut" placeholder="Ej: 12345678-9" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" id="regNombre" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="regCorreo" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Contraseña Temporal</label>
+                                <input type="password" class="form-control" id="regClave" required>
+                            </div>
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-success fw-bold">Guardar y Generar QR</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventana Emergente (Modal) para Editar Usuario (GU-02) -->
+        <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title fw-bold">Modificar Empleado</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formEditarUsuario">
+                            <input type="hidden" id="editId">
+                            <div class="mb-3">
+                                <label class="form-label">RUT</label>
+                                <input type="text" class="form-control" id="editRut" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" id="editNombre" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="editCorreo" required>
+                            </div>
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-warning fw-bold">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Bootstrap para activar las animaciones -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const nombreAdmin = localStorage.getItem('nombre_usuario');
+        const rolAdmin = localStorage.getItem('rol_usuario');
+
+        if (nombreAdmin && rolAdmin == 1) {
+            document.getElementById('adminLogueado').innerText = "Hola, " + nombreAdmin;
+        } else {
+            alert("Acceso denegado. No tienes permisos de administrador.");
+            window.location.href = 'login.html';
+        }
+
+        function cerrarSesion() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // --- FUNCIONES DE TRABAJADORES ---
+        async function cargarUsuarios() {
+            try {
+                const respuesta = await fetch('https://backend-asistencia-9jjt.onrender.com/api/usuarios');
+                const datos = await respuesta.json();
+                const tbody = document.getElementById('tablaUsuarios');
+                tbody.innerHTML = ''; 
+
+                if (datos.success) {
+                    datos.usuarios.forEach(user => {
+                        const colorRol = user.nombreRol === 'Administrador' ? 'bg-primary' : 'bg-success';
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="px-3"><strong>${user.idUsuario}</strong></td>
+                                <td>${user.rut}</td>
+                                <td>${user.nombre}</td>
+                                <td>${user.correo}</td>
+                                <td><span class="badge ${colorRol}">${user.nombreRol}</span></td>
+                                <td class="text-center">
+                                    <button class="btn btn-warning btn-sm me-1" onclick="abrirModalEditar(${user.idUsuario}, '${user.rut}', '${user.nombre}', '${user.correo}')">Editar</button>
+                                    <button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${user.idUsuario})">Eliminar</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Error al cargar usuarios</td></tr>`;
+                }
+            } catch (error) {
+                console.error('Error de conexión:', error);
+                document.getElementById('tablaUsuarios').innerHTML = 
+                    `<tr><td colspan="6" class="text-center text-danger py-4">No se pudo conectar con el servidor Node.js.</td></tr>`;
+            }
+        }
+
+        cargarUsuarios();
+
+        document.getElementById('formCrearUsuario').addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+            const rut = document.getElementById('regRut').value;
+            const nombre = document.getElementById('regNombre').value;
+            const correo = document.getElementById('regCorreo').value;
+            const contrasena = document.getElementById('regClave').value;
+
+            try {
+                const respuesta = await fetch('https://backend-asistencia-9jjt.onrender.com/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rut, nombre, correo, contrasena })
+                });
+                
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    alert('¡Trabajador registrado exitosamente!');
+                    bootstrap.Modal.getInstance(document.getElementById('modalNuevoUsuario')).hide();
+                    document.getElementById('formCrearUsuario').reset();
+                    cargarUsuarios();
+                } else {
+                    alert('Error: ' + datos.mensaje);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al conectar con el servidor.');
+            }
+        });
+
+        async function eliminarUsuario(id) {
+            if (confirm('⚠️ ¿Estás seguro de que deseas eliminar a este trabajador? Esta acción no se puede deshacer.')) {
+                try {
+                    const respuesta = await fetch(`https://backend-asistencia-9jjt.onrender.com/api/usuarios/${id}`, { method: 'DELETE' });
+                    const datos = await respuesta.json();
+
+                    if (datos.success) {
+                        alert('Trabajador eliminado correctamente de la base de datos.');
+                        cargarUsuarios(); 
+                    } else {
+                        alert('Error: ' + datos.mensaje);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al conectar con el servidor.');
+                }
+            }
+        }
+
+        function abrirModalEditar(id, rut, nombre, correo) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editRut').value = rut;
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editCorreo').value = correo;
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarUsuario'));
+            modal.show();
+        }
+
+        document.getElementById('formEditarUsuario').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const rut = document.getElementById('editRut').value;
+            const nombre = document.getElementById('editNombre').value;
+            const correo = document.getElementById('editCorreo').value;
+
+            try {
+                const respuesta = await fetch(`https://backend-asistencia-9jjt.onrender.com/api/usuarios/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rut, nombre, correo })
+                });
+                
+                const datos = await respuesta.json();
+
+                if (datos.success) {
+                    alert('Usuario modificado exitosamente');
+                    bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
+                    cargarUsuarios(); 
+                } else {
+                    alert('Error: ' + datos.mensaje);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al conectar con el servidor.');
+            }
+        });
+
+        // --- FUNCIONES PARA LICENCIAS ---
+        async function cargarLicencias() {
+            try {
+                // 1. Cargar Pendientes
+                const resPendientes = await fetch('https://backend-asistencia-9jjt.onrender.com/api/admin/justificaciones');
+                const datosPendientes = await resPendientes.json();
+                
+                let htmlPendientes = '';
+                if (datosPendientes.datos.length === 0) {
+                    htmlPendientes = '<tr><td colspan="5" class="text-center text-muted py-4">No hay licencias pendientes por revisar.</td></tr>';
+                } else {
+                    datosPendientes.datos.forEach(lic => {
+                        htmlPendientes += `
+                        <tr>
+                            <td class="px-3"><strong>${lic.nombre}</strong><br><small class="text-muted">${lic.rut}</small></td>
+                            <td>${lic.motivo}</td><td>${lic.profesionalEmisor}</td>
+                            <td><a href="https://backend-asistencia-9jjt.onrender.com/uploads/${lic.rutaPDF}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold">📄 Ver PDF</a></td>
+                            <td class="text-center">
+                                <button onclick="gestionarLicencia(${lic.idJustificacion}, 'APROBADO')" class="btn btn-sm btn-success me-1">Aprobar</button>
+                                <button onclick="gestionarLicencia(${lic.idJustificacion}, 'RECHAZADO')" class="btn btn-sm btn-danger">Rechazar</button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+                document.getElementById('cuerpoTablaLicencias').innerHTML = htmlPendientes;
+
+                // 2. Cargar Historial
+                const resHistorial = await fetch('https://backend-asistencia-9jjt.onrender.com/api/admin/justificaciones-historial');
+                const datosHistorial = await resHistorial.json();
+                
+                let htmlHistorial = '';
+                if (datosHistorial.datos.length === 0) {
+                    htmlHistorial = '<tr><td colspan="4" class="text-center text-muted py-4">Aún no hay licencias procesadas.</td></tr>';
+                } else {
+                    datosHistorial.datos.forEach(lic => {
+                        const badgeColor = lic.estadoSolicitud === 'APROBADO' ? 'bg-success' : 'bg-danger';
+                        htmlHistorial += `
+                        <tr>
+                            <td class="px-3"><strong>${lic.nombre}</strong><br><small class="text-muted">${lic.rut}</small></td>
+                            <td>${lic.motivo}</td>
+                            <td><a href="https://backend-asistencia-9jjt.onrender.com/uploads/${lic.rutaPDF}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold">📄 Ver PDF</a></td>
+                            <td class="text-center"><span class="badge ${badgeColor}">${lic.estadoSolicitud}</span></td>
+                        </tr>`;
+                    });
+                }
+                document.getElementById('cuerpoTablaHistorialLicencias').innerHTML = htmlHistorial;
+                
+            } catch (error) {
+                console.error('Error al cargar licencias:', error);
+            }
+        }
+
+        async function gestionarLicencia(idJustificacion, estado) {
+            if(!confirm(`¿Estás seguro de marcar esta licencia médica como ${estado}?`)) return;
+            
+            const idAdmin = localStorage.getItem('id_usuario'); 
+            
+            try {
+                const respuesta = await fetch(`https://backend-asistencia-9jjt.onrender.com/api/admin/justificaciones/${idJustificacion}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: estado, idAdministrador: idAdmin })
+                });
+                const datos = await respuesta.json();
+                if(datos.success){
+                    cargarLicencias();
+                } else {
+                    alert('Error: ' + datos.mensaje);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // --- FUNCIONES PARA AUDITORÍA ---
+        async function cargarAuditoria() {
+            try {
+                const respuesta = await fetch('https://backend-asistencia-9jjt.onrender.com/api/admin/auditoria');
+                const datos = await respuesta.json();
+                
+                let html = '';
+                if(datos.datos.length === 0){
+                    html = '<tr><td colspan="6" class="text-center text-muted py-4">No hay registros de auditoría.</td></tr>';
+                } else {
+                    datos.datos.forEach(reg => {
+                        let colorBadge = reg.accion === 'LOGIN' ? 'bg-info' : 
+                                         reg.accion === 'INSERT' ? 'bg-success' : 
+                                         reg.accion === 'UPDATE' ? 'bg-warning' : 'bg-danger';
+
+                        // Formateamos la fecha a formato local de Chile
+                        const fechaFormateada = new Date(reg.fechaHora).toLocaleString('es-CL');
+
+                        html += `
+                        <tr>
+                            <td class="px-3">${reg.idHistorial}</td>
+                            <td><small class="text-muted fw-bold">${fechaFormateada}</small></td>
+                            <td class="fw-bold">${reg.actor || 'Sistema'}</td>
+                            <td>${reg.tablaAfectada}</td>
+                            <td><span class="badge ${colorBadge}">${reg.accion}</span></td>
+                            <td>${reg.descripcion}</td>
+                        </tr>`;
+                    });
+                }
+                document.getElementById('cuerpoTablaAuditoria').innerHTML = html;
+            } catch (error) {
+                console.error('Error al cargar auditoría:', error);
+                document.getElementById('cuerpoTablaAuditoria').innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Error al cargar la auditoría.</td></tr>`;
+            }
+        }
+
+        // --- FILTROS DE AUDITORÍA ---
+        function filtrarAuditoria() {
+            const textoBuscar = document.getElementById('buscadorAuditoria').value.toLowerCase();
+            const fechaBuscar = document.getElementById('fechaAuditoria').value; // Llega como YYYY-MM-DD
+            
+            // Extraemos las partes para hacer una búsqueda flexible
+            let dia = '', mes = '', anio = '';
+            if (fechaBuscar) {
+                const partes = fechaBuscar.split('-');
+                anio = partes[0]; mes = partes[1]; dia = partes[2];
+            }
+
+            const filas = document.querySelectorAll('#cuerpoTablaAuditoria tr');
+
+            filas.forEach(fila => {
+                // Ignorar la fila si dice "Cargando..." o "No hay registros"
+                if (fila.cells.length < 2) return; 
+
+                const textoFila = fila.innerText.toLowerCase();
+                const fechaFila = fila.cells[1].innerText; 
+
+                // 1. ¿Coincide el texto?
+                const coincideTexto = textoBuscar === '' || textoFila.includes(textoBuscar);
+                
+                // 2. ¿Coincide la fecha? (Buscamos guiones o barras)
+                let coincideFecha = true;
+                if (fechaBuscar !== '') {
+                    coincideFecha = fechaFila.includes(`${dia}-${mes}-${anio}`) || fechaFila.includes(`${dia}/${mes}/${anio}`);
+                }
+
+                // Si cumple ambas reglas, se muestra. Si no, se oculta.
+                if (coincideTexto && coincideFecha) {
+                    fila.style.display = '';
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('buscadorAuditoria').value = '';
+            document.getElementById('fechaAuditoria').value = '';
+            filtrarAuditoria(); // Ejecutamos el filtro vacío para que vuelva a mostrar toda la tabla
+        }
+
+        // --- FUNCIONES PARA REPORTES ---
+        async function cargarReporte(tipo) {
+            try {
+                const respuesta = await fetch(`https://backend-asistencia-9jjt.onrender.com/api/reportes/${tipo}`);
+                const datos = await respuesta.json();
+                
+                document.getElementById('cabeceraReportes').innerHTML = `
+                    <tr><th class="px-3">RUT</th><th>Nombre</th><th>Fecha</th><th>Hora de Marcaje</th></tr>
+                `;
+                
+                let html = '';
+                if (datos.datos.length === 0) {
+                    html = `<tr><td colspan="4" class="text-center text-muted py-4">No hay registros de ${tipo.replace('-', ' ')}</td></tr>`;
+                } else {
+                    datos.datos.forEach(reg => {
+                        const hora = reg.horaEntrada || reg.horaSalida;
+                        html += `<tr><td class="px-3">${reg.rut}</td><td>${reg.nombre}</td><td>${reg.fecha.split('T')[0]}</td><td><span class="badge bg-warning text-dark">${hora}</span></td></tr>`;
+                    });
+                }
+                document.getElementById('cuerpoTablaReportes').innerHTML = html;
+            } catch (error) {
+                alert('Error al cargar el reporte');
+            }
+        }
+
+        async function cargarInasistencias() {
+    const fecha = document.getElementById('fechaInasistencia').value;
+    if (!fecha) return alert('Por favor, selecciona una fecha primero.');
+
+    try {
+        const respuesta = await fetch(`https://backend-asistencia-9jjt.onrender.com/api/reportes/inasistencias/${fecha}`);
+        const datos = await respuesta.json();
+        
+        document.getElementById('cabeceraReportes').innerHTML = `
+            <tr><th class="px-3">RUT</th><th>Nombre</th><th>Estado</th></tr>
+        `;
+        
+        let html = '';
+        if (datos.datos.length === 0) {
+            html = `<tr><td colspan="3" class="text-center text-muted py-4">Asistencia perfecta el ${fecha}</td></tr>`;
+        } else {
+            datos.datos.forEach(reg => {
+                // 🎨 Magia de colores: Cambia el color del botón según el estado
+                let colorBadge = 'bg-danger'; // Rojo por defecto para Ausente
+                if (reg.estado === 'Justificado') {
+                    colorBadge = 'bg-success'; // Verde para Justificado
+                } else if (reg.estado === 'Lic. Pendiente') {
+                    colorBadge = 'bg-warning text-dark'; // Amarillo para Pendiente
+                }
+
+                // Insertamos la variable ${reg.estado} en vez del texto fijo
+                html += `<tr>
+                    <td class="px-3">${reg.rut}</td>
+                    <td>${reg.nombre}</td>
+                    <td><span class="badge ${colorBadge}">${reg.estado}</span></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('cuerpoTablaReportes').innerHTML = html;
+    } catch (error) {
+        alert('Error al cargar las inasistencias');
+    }
+}
+    </script>
+</body>
+</html>
