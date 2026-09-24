@@ -58,7 +58,11 @@ app.post('/api/login', (req, res) => {
     const query = 'SELECT * FROM Usuario WHERE correo = ? AND contrasena = ?';
 
     db.query(query, [correo, contrasena], (err, results) => {
-        if (err) return res.status(500).json({ error: 'Error interno del servidor' });
+        // 🔥 Aquí agregamos el console.error para descubrir qué le molesta a Aiven
+        if (err) {
+            console.error('🔥 ERROR SQL DETALLADO:', err);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+        }
 
         if (results.length > 0) {
             const usuario = results[0];
