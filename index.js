@@ -220,9 +220,31 @@ app.get('/api/reportes/salidas-anticipadas', (req, res) => {
 
 app.get('/api/reportes/inasistencias/:fecha', (req, res) => {
     const fechaConsulta = req.params.fecha;
-    const query = "SELECT rut, nombre FROM usuario WHERE idRol = 2 AND idUsuario NOT IN (SELECT idUsuario FROM registroasistencia WHERE fecha = ?)";
-    db.query(query, [fechaConsulta], (err, resultados) => {
-        if (err) return res.status(500).json({ success: false, mensaje: 'Error al obtener inasistencias' });
+    
+    const query = `
+        SELECT 
+            u.rut, 
+            u.nombre,
+            CASE 
+                WHEN j.estadoSolicitud = 'APROBADO' THEN 'Justificado'
+                WHEN j.estadoSolicitud = 'PENDIENTE' THEN 'Lic. Pendiente'
+                ELSE 'Ausente'
+            END AS estado
+        FROM usuario u
+        LEFT JOIN justificacion j 
+            ON u.idUsuario = j.idUsuario 
+            AND ? BETWEEN j.fechaInicio AND j.fechaFin
+        WHERE u.idRol = 2 
+        AND u.idUsuario NOT IN (
+            SELECT idUsuario FROM registroasistencia WHERE fecha = ?
+        )
+    `;
+    
+    db.query(query, [fechaConsulta, fechaConsulta], (err, resultados) => {
+        if (err) {
+            console.error('🔥 ERROR SQL INASISTENCIAS:', err);
+            return res.status(500).json({ success: false, mensaje: 'Error al obtener inasistencias' });
+        }
         res.json({ success: true, datos: resultados });
     });
 });
