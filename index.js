@@ -36,7 +36,7 @@ db.connect((err) => {
 // Función global para registrar acciones en la auditoría
 function registrarAuditoria(idUsuarioActor, tablaAfectada, idAfectado, accion, descripcion) {
     const query = `
-        INSERT INTO historialAuditoria 
+        INSERT INTO historialauditoria 
         (idUsuarioActor, tablaAfectada, idAfectado, accion, descripcion) 
         VALUES (?, ?, ?, ?, ?)
     `;
@@ -58,9 +58,7 @@ app.post('/api/login', (req, res) => {
     const query = 'SELECT * FROM usuario WHERE correo = ? AND contrasena = ?';
 
     db.query(query, [correo, contrasena], (err, results) => {
-        // 🔥 Aquí agregamos el console.error para descubrir qué le molesta a Aiven
         if (err) {
-            console.error('🔥 ERROR SQL DETALLADO:', err);
             return res.status(500).json({ error: 'Error interno del servidor' });
         }
 
@@ -95,7 +93,7 @@ app.post('/api/marcar-asistencia', (req, res) => {
         const usuario = usuarios[0];
         const fechaActual = new Date().toISOString().split('T')[0];
         const horaActual = new Date().toTimeString().split(' ')[0];
-        const queryComprobar = 'SELECT idRegistro, horaEntrada, horaSalida, estadoAsistencia FROM registroAsistencia WHERE idUsuario = ? AND fecha = ?';
+        const queryComprobar = 'SELECT idRegistro, horaEntrada, horaSalida, estadoAsistencia FROM registroasistencia WHERE idUsuario = ? AND fecha = ?';
         
         db.query(queryComprobar, [usuario.idUsuario, fechaActual], (err, registros) => {
             if (err) return res.status(500).json({ error: 'Error al comprobar registro' });
@@ -103,7 +101,7 @@ app.post('/api/marcar-asistencia', (req, res) => {
             if (registros.length === 0) {
                 // ESCENARIO A: ENTRADA
                 let estadoEntrada = horaActual > '09:30:00' ? 'ATRASADO' : 'ASISTENCIA COMPLETA';
-                const queryEntrada = 'INSERT INTO registroAsistencia (idUsuario, fecha, horaEntrada, estadoAsistencia) VALUES (?, ?, ?, ?)';
+                const queryEntrada = 'INSERT INTO registroasistencia (idUsuario, fecha, horaEntrada, estadoAsistencia) VALUES (?, ?, ?, ?)';
                 
                 // NOTA: Agregamos "result" para obtener el ID de la nueva fila
                 db.query(queryEntrada, [usuario.idUsuario, fechaActual, horaActual, estadoEntrada], (err, result) => {
@@ -123,7 +121,7 @@ app.post('/api/marcar-asistencia', (req, res) => {
                     if (horaActual < '17:30:00') estadoSalida = 'SALIDA ANTICIPADA';
                     
                     const querySalida = `
-                        UPDATE registroAsistencia 
+                        UPDATE registroasistencia 
                         SET horaSalida = ?, horasTrabajadas = ROUND(TIME_TO_SEC(TIMEDIFF(?, horaEntrada))/3600, 2), estadoAsistencia = ?
                         WHERE idRegistro = ?
                     `;
@@ -205,7 +203,7 @@ app.delete('/api/usuarios/:id', (req, res) => {
 // MÓDULO DE REPORTES (RE-01, RE-02, RE-03)
 // ==========================================
 app.get('/api/reportes/atrasos', (req, res) => {
-    const query = "SELECT u.rut, u.nombre, r.fecha, r.horaEntrada FROM registroAsistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE r.estadoAsistencia = 'ATRASADO' ORDER BY r.fecha DESC, r.horaEntrada DESC";
+    const query = "SELECT u.rut, u.nombre, r.fecha, r.horaEntrada FROM registroasistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE r.estadoAsistencia = 'ATRASADO' ORDER BY r.fecha DESC, r.horaEntrada DESC";
     db.query(query, (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al obtener atrasos' });
         res.json({ success: true, datos: resultados });
@@ -213,7 +211,7 @@ app.get('/api/reportes/atrasos', (req, res) => {
 });
 
 app.get('/api/reportes/salidas-anticipadas', (req, res) => {
-    const query = "SELECT u.rut, u.nombre, r.fecha, r.horaSalida FROM registroAsistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE r.estadoAsistencia = 'SALIDA ANTICIPADA' ORDER BY r.fecha DESC, r.horaSalida DESC";
+    const query = "SELECT u.rut, u.nombre, r.fecha, r.horaSalida FROM registroasistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE r.estadoAsistencia = 'SALIDA ANTICIPADA' ORDER BY r.fecha DESC, r.horaSalida DESC";
     db.query(query, (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al obtener salidas anticipadas' });
         res.json({ success: true, datos: resultados });
@@ -222,7 +220,7 @@ app.get('/api/reportes/salidas-anticipadas', (req, res) => {
 
 app.get('/api/reportes/inasistencias/:fecha', (req, res) => {
     const fechaConsulta = req.params.fecha;
-    const query = "SELECT rut, nombre FROM usuario WHERE idRol = 2 AND idUsuario NOT IN (SELECT idUsuario FROM registroAsistencia WHERE fecha = ?)";
+    const query = "SELECT rut, nombre FROM usuario WHERE idRol = 2 AND idUsuario NOT IN (SELECT idUsuario FROM registroasistencia WHERE fecha = ?)";
     db.query(query, [fechaConsulta], (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error al obtener inasistencias' });
         res.json({ success: true, datos: resultados });
@@ -231,7 +229,7 @@ app.get('/api/reportes/inasistencias/:fecha', (req, res) => {
 
 app.get('/api/mi-historial/:qr', (req, res) => {
     const qrWorker = req.params.qr;
-    const query = "SELECT r.fecha, r.horaEntrada, r.horaSalida, r.estadoAsistencia FROM registroAsistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE u.codigoQR = ? ORDER BY r.fecha DESC LIMIT 10";
+    const query = "SELECT r.fecha, r.horaEntrada, r.horaSalida, r.estadoAsistencia FROM registroasistencia r INNER JOIN usuario u ON r.idUsuario = u.idUsuario WHERE u.codigoQR = ? ORDER BY r.fecha DESC LIMIT 10";
     db.query(query, [qrWorker], (err, resultados) => {
         if (err) return res.status(500).json({ success: false, mensaje: 'Error en la base de datos' });
         res.json({ success: true, historial: resultados });
@@ -311,7 +309,7 @@ app.put('/api/admin/justificaciones/:id', (req, res) => {
                         let fechaStr = fechaActual.toISOString().split('T')[0];
                         
                         // Insertamos la justificación en el registro de asistencia de ese día
-                        db.query('INSERT INTO RegistroAsistencia (idUsuario, fecha, estado) VALUES (?, ?, "JUSTIFICADO")', [idUsuario, fechaStr]);
+                        db.query('INSERT INTO registroasistencia (idUsuario, fecha, estado) VALUES (?, ?, "JUSTIFICADO")', [idUsuario, fechaStr]);
                         
                         // Avanzamos al siguiente día
                         fechaActual.setDate(fechaActual.getDate() + 1);
@@ -326,15 +324,20 @@ app.put('/api/admin/justificaciones/:id', (req, res) => {
 
 // 3. Obtener el historial de auditoría
 app.get('/api/admin/auditoria', (req, res) => {
+    // Cambiamos historialAuditoria a minúsculas, por si acaso
     const query = `
         SELECT h.idHistorial, h.fechaHora, h.tablaAfectada, h.accion, h.descripcion, u.nombre as actor
-        FROM historialAuditoria h
+        FROM historialauditoria h
         LEFT JOIN usuario u ON h.idUsuarioActor = u.idUsuario
         ORDER BY h.idHistorial DESC
         LIMIT 30
     `;
     db.query(query, (err, resultados) => {
-        if (err) return res.status(500).json({ success: false, mensaje: 'Error al obtener auditoría' });
+        if (err) {
+            // 🔥 Agregamos esto para ver el error exacto en Render si vuelve a fallar
+            console.error('🔥 ERROR SQL AUDITORIA:', err); 
+            return res.status(500).json({ success: false, mensaje: 'Error al obtener auditoría' });
+        }
         res.json({ success: true, datos: resultados });
     });
 });
