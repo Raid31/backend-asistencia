@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes de Asistencia</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Barra de Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">Módulo de Reportes</a>
+            <div class="d-flex align-items-center">
+                <a href="admin.html" class="btn btn-outline-info btn-sm me-3">Volver al Panel CRUD</a>
+                <span class="navbar-text me-3 text-white" id="adminLogueado"></span>
+                <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="text-secondary mb-4">Reportes de Control de Asistencia</h2>
+
+        <!-- Navegación de Pestañas (Tabs) -->
+        <ul class="nav nav-tabs mb-4" id="reportesTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold text-danger" id="atrasos-tab" data-bs-toggle="tab" data-bs-target="#atrasos" type="button" role="tab">Atrasos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-warning" id="salidas-tab" data-bs-toggle="tab" data-bs-target="#salidas" type="button" role="tab">Salidas Anticipadas</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-secondary" id="inasistencias-tab" data-bs-toggle="tab" data-bs-target="#inasistencias" type="button" role="tab">Inasistencias</button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="tab-content" id="reportesTabsContent">
+            
+            <!-- PESTAÑA 1: Atrasos -->
+            <div class="tab-pane fade show active" id="atrasos" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr><th>RUT</th><th>Nombre</th><th>Fecha</th><th>Hora de Entrada</th></tr>
+                            </thead>
+                            <tbody id="tablaAtrasos">
+                                <tr><td colspan="4" class="text-center py-4">Cargando datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 2: Salidas Anticipadas -->
+            <div class="tab-pane fade" id="salidas" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr><th>RUT</th><th>Nombre</th><th>Fecha</th><th>Hora de Salida</th></tr>
+                            </thead>
+                            <tbody id="tablaSalidas">
+                                <tr><td colspan="4" class="text-center py-4">Cargando datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: Inasistencias -->
+            <div class="tab-pane fade" id="inasistencias" role="tabpanel">
+                <div class="card shadow-sm border-0 mb-3 p-3 bg-white">
+                    <div class="row align-items-center">
+                        <div class="col-md-auto">
+                            <label class="form-label fw-bold mb-0">Seleccione la fecha a consultar:</label>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="date" id="fechaConsulta" class="form-control">
+                        </div>
+                        <div class="col-md-auto">
+                            <button class="btn btn-secondary fw-bold" onclick="consultarInasistencias()">Buscar Ausentes</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr><th>RUT</th><th>Nombre</th><th>Estado</th></tr>
+                            </thead>
+                            <tbody id="tablaInasistencias">
+                                <tr><td colspan="3" class="text-center py-4 text-muted">Seleccione una fecha para generar el reporte.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scripts de Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Lógica de la página -->
+    <script>
+        // 1. Seguridad
+        const nombreAdmin = localStorage.getItem('nombre_usuario');
+        const rolAdmin = localStorage.getItem('rol_usuario');
+
+        if (nombreAdmin && rolAdmin == 1) {
+            document.getElementById('adminLogueado').innerText = "Hola, " + nombreAdmin;
+        } else {
+            alert("Acceso denegado. No tienes permisos de administrador.");
+            window.location.href = 'login.html';
+        }
+
+        function cerrarSesion() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // 2. Cargar Atrasos (RE-01)
+        async function cargarAtrasos() {
+            try {
+                const res = await fetch('https://backend-asistencia-9jjt.onrender.com/api/reportes/atrasos');
+                const datos = await res.json();
+                const tbody = document.getElementById('tablaAtrasos');
+                tbody.innerHTML = '';
+
+                if (datos.success && datos.datos.length > 0) {
+                    datos.datos.forEach(reg => {
+                        tbody.innerHTML += `<tr><td>${reg.rut}</td><td>${reg.nombre}</td><td>${reg.fecha.split('T')[0]}</td><td class="text-danger fw-bold">${reg.horaEntrada}</td></tr>`;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-success py-4">No hay atrasos registrados.</td></tr>`;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // 3. Cargar Salidas Anticipadas (RE-02)
+        async function cargarSalidas() {
+            try {
+                const res = await fetch('https://backend-asistencia-9jjt.onrender.com/api/reportes/salidas-anticipadas');
+                const datos = await res.json();
+                const tbody = document.getElementById('tablaSalidas');
+                tbody.innerHTML = '';
+
+                if (datos.success && datos.datos.length > 0) {
+                    datos.datos.forEach(reg => {
+                        tbody.innerHTML += `<tr><td>${reg.rut}</td><td>${reg.nombre}</td><td>${reg.fecha.split('T')[0]}</td><td class="text-warning fw-bold">${reg.horaSalida}</td></tr>`;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-success py-4">No hay salidas anticipadas registradas.</td></tr>`;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // 4. Consultar Inasistencias (RE-03)
+        async function consultarInasistencias() {
+            const fecha = document.getElementById('fechaConsulta').value;
+            if (!fecha) return alert("Por favor, seleccione una fecha primero.");
+
+            try {
+                const res = await fetch(`https://backend-asistencia-9jjt.onrender.com/api/reportes/inasistencias/${fecha}`);
+                const datos = await res.json();
+                const tbody = document.getElementById('tablaInasistencias');
+                tbody.innerHTML = '';
+
+                if (datos.success && datos.datos.length > 0) {
+                    datos.datos.forEach(user => {
+                        tbody.innerHTML += `<tr><td>${user.rut}</td><td>${user.nombre}</td><td><span class="badge bg-secondary">AUSENTE</span></td></tr>`;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-success py-4">Todos los trabajadores asistieron en esta fecha.</td></tr>`;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Inicializar datos al abrir la página
+        cargarAtrasos();
+        cargarSalidas();
+        
+        // Poner la fecha de hoy por defecto en el buscador de inasistencias
+        document.getElementById('fechaConsulta').value = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>
